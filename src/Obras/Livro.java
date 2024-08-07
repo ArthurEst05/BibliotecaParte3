@@ -9,7 +9,13 @@ public class Livro extends Obra implements Serializable{
     private String edicao;
     private int numFolhas;
     private boolean disponivel;
+
+ 
     
+    public Livro(String titulo, String autores) {
+        super(titulo, autores);
+    }
+
     public Livro(String titulo, String autores, String area, String ano, boolean digital) {
         super(titulo, autores, area, ano, digital);
     }

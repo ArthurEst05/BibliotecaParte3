@@ -12,6 +12,11 @@ public abstract class Obra implements Serializable{
     private String ano;
     private boolean digital;
 
+    public Obra(String titulo, String autores){
+        this.titulo = titulo;
+        this.autores = autores;
+    }
+
     public Obra(String titulo, String autores, String area, String ano, boolean digital) {
         this.titulo = titulo;
         this.autores = autores;

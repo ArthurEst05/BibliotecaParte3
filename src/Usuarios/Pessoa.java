@@ -10,15 +10,19 @@ public abstract class Usuarios implements Serializable{
     private int idade;
     private String sexo;
     private String telefone;
+    private String senha;
 
-    public Usuarios() {
+    public Usuarios(String nome, String senha) {
+        this.nome = nome;
+        this.senha = senha;
     }
 
-    public Usuarios(String nome, int idade, String sexo, String telefone) {
+    public Usuarios(String nome, int idade, String sexo, String telefone,String senha) {
         this.nome = nome;
         this.idade = idade;
         this.sexo = sexo;
         this.telefone = telefone;
+        this.senha = senha;
     }
 
 
@@ -65,5 +69,20 @@ public abstract class Usuarios implements Serializable{
     public void lerLivro() {
         System.out.println("O usuário está lendo o livro");
     }
+
+    public String getSenha() {
+        return senha;
+    }
+
+    public abstract String getTipo();
+
+    public static String getTipoUsuario(Usuarios usuario) {
+    if (usuario != null) {
+        return usuario.getTipo();
+    } else {
+        return "Usuário desconhecido";
+    }
+}
+
 
 }

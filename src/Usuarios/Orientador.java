@@ -8,15 +8,18 @@ public class Professor extends Usuarios implements Serializable{
     private String disciplina;
     private String grauAcademico;
 
-    public Professor() {
+    
+    public Professor(String nome, String senha) {
+        super(nome, senha);
     }
 
-    public Professor(String nome, int idade, String sexo, String telefone) {
-        super(nome, idade, sexo, telefone);
+
+    public Professor(String nome, int idade, String sexo, String telefone, String senha) {
+        super(nome, idade, sexo, telefone, senha);
     }
 
-    public Professor(String nome, int idade, String sexo, String telefone, String disciplina, String grauAcademico) {
-        super(nome, idade, sexo, telefone);
+    public Professor(String nome, int idade, String sexo, String telefone, String disciplina, String grauAcademico, String senha) {
+        super(nome, idade, sexo, telefone, senha);
         this.disciplina = disciplina;
         this.grauAcademico = grauAcademico;
     }
@@ -34,6 +37,12 @@ public class Professor extends Usuarios implements Serializable{
         this.grauAcademico = grauAcademico;
     }
 
+
+ @Override
+    public String getTipo() {
+        return "Professor";
+    }
+    
     @Override
     public String toString() {
         return "Professor [disciplina=" + disciplina + ", grauAcademico=" + grauAcademico + ", getId()=" + getId()

@@ -8,16 +8,21 @@ public class Estudante extends Usuarios implements Serializable{
     private String instituicaoEducacional;
     private String matricula;
 
-    public Estudante(String nome, int idade, String sexo, String telefone) {
-        super(nome, idade, sexo, telefone);
+    public Estudante(String nome, int idade, String sexo, String telefone, String senha) {
+        super(nome, idade, sexo, telefone, senha);
     }
 
-    public Estudante() {
+   
+
+    public Estudante(String nome, String senha) {
+        super(nome, senha);
     }
+
+
 
     public Estudante(String nome, int idade, String sexo, String telefone, String instituicaoEducacional,
-                     String matricula) {
-        super(nome, idade, sexo, telefone);
+                     String matricula, String senha) {
+        super(nome, idade, sexo, telefone, senha);
         this.instituicaoEducacional = instituicaoEducacional;
         this.matricula = matricula;
     }
@@ -33,6 +38,11 @@ public class Estudante extends Usuarios implements Serializable{
     }
     public void setMatricula(String matricula) {
         this.matricula = matricula;
+    }
+
+    @Override
+      public String getTipo() {
+        return "Estudante";
     }
 
     @Override

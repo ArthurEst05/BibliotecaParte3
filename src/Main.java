@@ -1,51 +1,115 @@
+
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Scanner;
+import java.time.LocalDate;
+import java.time.LocalTime;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
 import Emprest.Emprestimos;
 import Emprest.Reserva;
+import Faculdade.Faculdade;
 import ImplementDAO.ObraDAO;
 import ImplementDAO.UsuarioDAO;
 import Interface.DAO;
 import Obras.Livro;
 import Obras.Obra;
-import Usuarios.Estudante;
+import Usuarios.Aluno;
 import Usuarios.Funcionario;
-import Usuarios.Professor;
-import Usuarios.Usuarios;
+import Usuarios.Orientador;
+import Usuarios.Pessoa;
 
 public class Main {
     private static final String USUARIOS_FILE = "C:\\temp\\usuarios.json";
     private static final String LIVROS_FILE = "C:\\temp\\livros.json";
     private static final String EMPRESTIMOS_FILE = "C:\\temp\\emprestimos.json";
-    private static final String RESERVA_FILE = "C:\\temp\\reserva.json";
+    private static final String RESERVA_FILE = "C:\\temp\\reservas.json";
 
     private static Gson gson = new Gson();
     private static ArrayList<Emprestimos> emprestimos;
     private static ArrayList<Livro> livros;
-    private static ArrayList<Usuarios> usuarios;
-    private static DAO<Usuarios> usuarioDAO;
+    private static ArrayList<Pessoa> usuarios;
+    private static DAO<Pessoa> usuarioDAO;
     private static DAO<Obra> obraDao;
     private static ArrayList<Reserva> reservas;
 
     public static void main(String[] args) throws IOException {
         Scanner sc = new Scanner(System.in);
-        emprestimos = loadFromFile(EMPRESTIMOS_FILE, new TypeToken<ArrayList<Emprestimos>>(){}.getType());
-        livros = loadFromFile(LIVROS_FILE, new TypeToken<ArrayList<Livro>>(){}.getType());
-        usuarios = loadFromFile(USUARIOS_FILE, new TypeToken<ArrayList<Usuarios>>(){}.getType());
-        reservas = loadFromFile(RESERVA_FILE,new TypeToken<ArrayList<Reserva>>(){}.getType());
-        
+        emprestimos = loadFromFile(EMPRESTIMOS_FILE, new TypeToken<ArrayList<Emprestimos>>() {
+        }.getType());
+        livros = loadFromFile(LIVROS_FILE, new TypeToken<ArrayList<Livro>>() {
+        }.getType());
+        usuarios = loadFromFile(USUARIOS_FILE, new TypeToken<ArrayList<Pessoa>>() {
+        }.getType());
+        reservas = loadFromFile(RESERVA_FILE, new TypeToken<ArrayList<Reserva>>() {
+        }.getType());
+
         usuarioDAO = new UsuarioDAO();
         obraDao = new ObraDAO();
-        
 
+        Pessoa usuarioAdm = findUsuarioByName("adm");
+        if (usuarioAdm == null) {
+            usuarioAdm = new Funcionario("adm", "123");
+            usuarios.add(usuarioAdm);
+            saveToFile(USUARIOS_FILE, usuarios);
+            System.out.println("Usuário padrão 'adm' criado.");
+        } else {
+            System.out.println("Usuário padrão 'adm' já existe.");
+        }
+
+        while (true) {
+            System.out.println();
+            System.out.println("Escolha o tipo de usuário:");
+            System.out.println("1. Funcionário");
+            System.out.println("2. Usuário Comum");
+            System.out.println("3. Sair");
+            int opcaoUsuario = sc.nextInt();
+            sc.nextLine();
+
+            if (opcaoUsuario == 3) {
+                sc.close();
+                System.exit(0);
+            }
+
+            System.out.println("Informe o nome de usuário:");
+            String nome = sc.nextLine();
+            System.out.println("Informe a senha:");
+            String senha = sc.nextLine();
+
+            Pessoa usuarioLogado = autenticarUsuario(nome, senha, opcaoUsuario);
+            if (usuarioLogado != null) {
+                if (opcaoUsuario == 1) {
+                    menuFuncionario(sc);
+                } else {
+                    menuUsuarioComum(sc, usuarioLogado);
+                }
+            } else {
+                System.out.println("Login ou senha inválidos.");
+            }
+        }
+    }
+
+    private static Pessoa autenticarUsuario(String nome, String senha, int tipoUsuario) {
+        for (Pessoa usuario : usuarios) {
+            if (usuario.getNome().equals(nome) && usuario.getSenha().equals(senha)) {
+                if ((tipoUsuario == 1 && usuario instanceof Funcionario) ||
+                        (tipoUsuario == 2 && !(usuario instanceof Funcionario))) {
+                    return usuario;
+                }
+            }
+        }
+        return null;
+    }
+
+    private static void menuFuncionario(Scanner sc) {
         while (true) {
             System.out.println();
             System.out.println("Escolha uma opção:");
@@ -53,8 +117,10 @@ public class Main {
             System.out.println("2. Gerenciar usuário");
             System.out.println("3. Gerenciar empréstimos");
             System.out.println("4. Gerenciar reservas");
-            
-            System.out.println("5. Sair");
+            System.out.println("5. Cadastrar trabalho");
+
+            System.out.println("6. Sair");
+
             int opcao = sc.nextInt();
             sc.nextLine();
 
@@ -68,13 +134,14 @@ public class Main {
                 case 3:
                     gerenciarEmprestimos(sc);
                     break;
-                    case 4 : 
+                case 4:
                     gerenciarReservas(sc);
                     break;
-                case 5:
-                    sc.close();
-                    System.exit(0);
-                    break;
+                    case 5 : 
+
+                break;
+                case 6:
+                    return; // Volta para o menu anterior
                 default:
                     System.out.println("Opção inválida. Escolha novamente.");
                     break;
@@ -82,261 +149,93 @@ public class Main {
         }
     }
 
-    private static void gerenciarLivro(Scanner sc) {
-        System.out.println("1. Cadastrar Livro");
-        System.out.println("2. Excluir Livro");
-        System.out.println("3. Ler Livro");
-        int subOpcao = sc.nextInt();
-        sc.nextLine();
+    private static void menuUsuarioComum(Scanner sc, Pessoa usuarioLogado) {
+        while (true) {
+            System.out.println();
+            System.out.println("Escolha uma opção:");
+            System.out.println("1. Consultar acervo");
+            System.out.println("2. Fazer empréstimo");
+            System.out.println("3. Fazer devolução");
+            System.out.println("4. Fazer reserva");
+            System.out.println("5. Consultar seus empréstimos");
+            System.out.println("6. Consultar suas reservas");
+            System.out.println("7. Sair");
 
-        switch (subOpcao) {
-            case 1:
-                cadastrarLivro(sc);
-                break;
-            case 2:
-                excluirLivro(sc);
-                break;
-            case 3:
-                lerLivro(sc);
-                break;
-            default:
-                System.out.println("Opção inválida.");
-                break;
-        }
-    }
-
-    private static void cadastrarLivro(Scanner sc) {
-        System.out.println("Cadastrar livro");
-        System.out.println("Qual o título do livro: ");
-        String titulo = sc.nextLine();
-        System.out.println("Qual o autor do livro: ");
-        String autores = sc.nextLine();
-        System.out.println("Qual a área do livro: ");
-        String area = sc.nextLine();
-        System.out.println("Qual a editora do livro: ");
-        String editora = sc.nextLine();
-        System.out.println("Qual o ano do livro: ");
-        String ano = sc.nextLine();
-        System.out.println("Qual a edição do livro: ");
-        String edicao = sc.nextLine();
-        System.out.println("Quantas folhas tem o livro: ");
-        int numFolhas = sc.nextInt();
-        sc.nextLine();
-        System.out.println("Seu livro é digital (y/n): ");
-        char tipo = sc.nextLine().charAt(0);
-         boolean digital = false;
-        if (tipo == 'y'){
-            digital = true;
-        }
-        Livro livro = new Livro(titulo, autores, area, editora, ano, edicao, numFolhas, false, digital);
-        livros.add(livro);
-        saveToFile(LIVROS_FILE, livros);
-    }
-
-    private static void excluirLivro(Scanner sc) {
-        System.out.println("Excluir livro");
-        System.out.println("Informe o ID do livro a ser excluído: ");
-        int idExcluir = sc.nextInt();
-        sc.nextLine();
-        Livro livroExcluir = (Livro) obraDao.ler(idExcluir);
-        if (livroExcluir != null) {
-            obraDao.excluir(livroExcluir);
-            livros.remove(livroExcluir);
-            saveToFile(LIVROS_FILE, livros);
-            System.out.println("Livro excluído com sucesso.");
-        } else {
-            System.out.println("Livro não encontrado.");
-        }
-    }
-
-    private static void lerLivro(Scanner sc) {
-        System.out.println("Ler livro");
-        System.out.println("Informe o ID do livro a ser lido: ");
-        int idLer = sc.nextInt();
-        sc.nextLine();
-        Livro obraLer = (Livro) obraDao.ler(idLer);
-        if (obraLer != null) {
-            System.out.println("Dados do livro:");
-            System.out.println("Título: " + obraLer.getTitulo());
-            System.out.println("Autores: " + obraLer.getAutores());
-            System.out.println("Área: " + obraLer.getArea());
-            System.out.println("Editora: " + obraLer.getEditora());
-            System.out.println("Ano de lançamento: " + obraLer.getAno());
-            System.out.println("Edição: " + obraLer.getEdicao());
-            System.out.println("Número de folhas: " + obraLer.getNumFolhas());
-        } else {
-            System.out.println("Livro não encontrado.");
-        }
-    }
-
-    private static void gerenciarUsuario(Scanner sc) {
-        System.out.println("1. Cadastrar Usuário");
-        System.out.println("2. Excluir Usuário");
-        System.out.println("3. Atualizar Usuário");
-        System.out.println("4. Ler Usuário");
-        int subOpcao = sc.nextInt();
-        sc.nextLine();
-
-        switch (subOpcao) {
-            case 1:
-                cadastrarUsuario(sc);
-                break;
-            case 2:
-                excluirUsuario(sc);
-                break;
-            case 3:
-                atualizarUsuario(sc);
-                break;
-            case 4:
-                lerUsuario(sc);
-                break;
-            default:
-                System.out.println("Opção inválida.");
-                break;
-        }
-    }
-
-    private static void cadastrarUsuario(Scanner sc) {
-        System.out.println("Cadastrar usuário");
-        System.out.print("Você deseja cadastrar 1. Funcionário 2. Professor 3. Estudante: ");
-        int tipoUsuario = sc.nextInt();
-        sc.nextLine();
-
-        System.out.println("Qual o nome do usuário: ");
-        String nome = sc.nextLine();
-        System.out.println("Qual a idade do usuário: ");
-        int idade = sc.nextInt();
-        sc.nextLine();
-        System.out.println("Qual o sexo do usuário: ");
-        String sexo = sc.nextLine();
-        System.out.println("Qual o telefone do usuário: ");
-        String telefone = sc.nextLine();
-
-        Usuarios usuario = null;
-        switch (tipoUsuario) {
-            case 1:
-                System.out.println("Qual o cargo do funcionário: ");
-                String cargo = sc.nextLine();
-                System.out.println("Qual o salário do funcionário: ");
-                double salario = sc.nextDouble();
-                sc.nextLine(); // consumir a nova linha
-                System.out.println("Qual o endereço do funcionário: ");
-                String endereco = sc.nextLine();
-                usuario = new Funcionario(nome, idade, sexo, telefone, cargo, salario, endereco);
-                break;
-            case 2:
-                System.out.println("Qual o grau acadêmico do professor: ");
-                String grau = sc.nextLine();
-                System.out.println("Qual a disciplina do professor: ");
-                String disciplina = sc.nextLine();
-                usuario = new Professor(nome, idade, sexo, telefone, disciplina, grau);
-                break;
-            case 3:
-                System.out.println("Qual a escola do estudante: ");
-                String inst = sc.nextLine();
-                System.out.println("Qual a matrícula do estudante: ");
-                String matricula = sc.nextLine();
-                usuario = new Estudante(nome, idade, sexo, telefone, inst, matricula);
-                break;
-            default:
-                System.out.println("Tipo de usuário inválido.");
-                break;
-        }
-
-        if (usuario != null) {
-            usuarios.add(usuario);
-            usuarioDAO.gravar(usuario);
-            saveToFile(USUARIOS_FILE, usuarios);
-        }
-    }
-
-    private static void excluirUsuario(Scanner sc) {
-        System.out.println("Excluir usuário");
-        System.out.println("Informe o ID do usuário a ser excluído: ");
-        int idExcluir = sc.nextInt();
-        sc.nextLine();
-        Usuarios usuarioExcluir = usuarioDAO.ler(idExcluir);
-        if (usuarioExcluir != null) {
-            usuarioDAO.excluir(usuarioExcluir);
-            usuarios.remove(usuarioExcluir);
-            saveToFile(USUARIOS_FILE, usuarios);
-            System.out.println("Usuário excluído com sucesso.");
-        } else {
-            System.out.println("Usuário não encontrado.");
-        }
-    }
-
-    private static void atualizarUsuario(Scanner sc) {
-        System.out.println("Atualizar usuário");
-        System.out.println("Informe o ID do usuário a ser atualizado: ");
-        int idAtualizar = sc.nextInt();
-        sc.nextLine();
-        Usuarios usuarioAtualizar = usuarioDAO.ler(idAtualizar);
-        if (usuarioAtualizar != null) {
-            System.out.println("Informe os novos dados do usuário.");
-            System.out.println("Nome: ");
-            usuarioAtualizar.setNome(sc.nextLine());
-            System.out.println("Idade: ");
-            usuarioAtualizar.setIdade(sc.nextInt());
+            int opcao = sc.nextInt();
             sc.nextLine();
-            System.out.println("Sexo: ");
-            usuarioAtualizar.setSexo(sc.nextLine());
-            System.out.println("Telefone: ");
-            usuarioAtualizar.setTelefone(sc.nextLine());
-            usuarioDAO.atualizar(usuarioAtualizar);
-            saveToFile(USUARIOS_FILE, usuarios);
-            System.out.println("Usuário atualizado com sucesso.");
-        } else {
-            System.out.println("Usuário não encontrado.");
+
+            switch (opcao) {
+                case 1:
+                    consultarAcervo();
+                    break;
+                case 2:
+                    realizarEmprestimo(sc);
+                    break;
+                case 3:
+                    realizarDevolucao(sc);
+                    break;
+                case 4:
+                    realizarReserva(sc);
+                    break;
+                case 5:
+                    listarEmprestimosUsuario(usuarioLogado);
+                    break;
+                case 6:
+                    listarReservasUsuario(usuarioLogado);
+                    break;
+                case 7:
+                    return;
+                default:
+                    System.out.println("Opção inválida. Escolha novamente.");
+                    break;
+            }
         }
     }
 
-    private static void lerUsuario(Scanner sc) {
-        System.out.println("Ler usuário");
-        System.out.println("Informe o ID do usuário a ser lido: ");
-        int idLer = sc.nextInt();
-        sc.nextLine();
-        Usuarios usuarioLer = usuarioDAO.ler(idLer);
-        if (usuarioLer != null) {
-            System.out.println("Dados do usuário:");
-            System.out.println("Nome: " + usuarioLer.getNome());
-            System.out.println("Idade: " + usuarioLer.getIdade());
-            System.out.println("Sexo: " + usuarioLer.getSexo());
-            System.out.println("Telefone: " + usuarioLer.getTelefone());
-        } else {
-            System.out.println("Usuário não encontrado.");
+    private static final int LIMITE_LIVROS_ESTUDANTE = 3;
+    private static final int LIMITE_LIVROS_FUNCIONARIO = 6;
+    private static final int LIMITE_LIVROS_PROFESSOR = 9;
+
+    private static final int DIAS_EMPRESTIMO_ESTUDANTE = 7;
+    private static final int DIAS_EMPRESTIMO_FUNCIONARIO = 15;
+    private static final int DIAS_EMPRESTIMO_PROFESSOR = 30;
+
+    private static boolean podeEmprestar(Pessoa usuario, Livro livro) {
+        if (usuario == null || livro == null) {
+            System.out.println("Usuário ou livro inválido.");
+            return false;
         }
-    }
 
-    private static void gerenciarEmprestimos(Scanner sc) {
-        System.out.println("1. Realizar Empréstimo");
-        System.out.println("2. Realizar Devolução");
-        System.out.println("3. Listar Todos os Empréstimos");
-        int subOpcao = sc.nextInt();
-        sc.nextLine();
+        int livrosEmprestados = contarLivrosEmprestados(usuario);
 
-        switch (subOpcao) {
-            case 1:
-                realizarEmprestimo(sc);
+        switch (usuario.getTipo()) {
+            case "Estudante":
+                if (livrosEmprestados >= LIMITE_LIVROS_ESTUDANTE) {
+                    System.out.println("Estudante já atingiu o limite de empréstimos.");
+                    return false;
+                }
                 break;
-            case 2:
-                realizarDevolucao(sc);
+            case "Funcionário":
+                if (livrosEmprestados >= LIMITE_LIVROS_FUNCIONARIO) {
+                    System.out.println("Funcionário já atingiu o limite de empréstimos.");
+                    return false;
+                }
                 break;
-            case 3:
-                listarEmprestimos();
+            case "Professor":
+                if (livrosEmprestados >= LIMITE_LIVROS_PROFESSOR) {
+                    System.out.println("Professor já atingiu o limite de empréstimos.");
+                    return false;
+                }
                 break;
             default:
-                System.out.println("Opção inválida.");
-                break;
+                System.out.println("Tipo de usuário desconhecido.");
+                return false;
         }
+
+        return true;
     }
 
     private static void realizarEmprestimo(Scanner sc) {
-        System.out.println("Opção 1 selecionada: Realizar empréstimo");
-        System.out.println("Data do empréstimo: ");
-        String dataEmprestimo = sc.nextLine();
-        System.out.println("Hora do empréstimo: ");
-        String horaEmprestimo = sc.nextLine();
         System.out.println("Nome do livro: ");
         String tituloLivro = sc.nextLine();
         Livro livroSelecionado = null;
@@ -350,10 +249,11 @@ public class Main {
             System.out.println("Livro não encontrado.");
             return;
         }
+
         System.out.println("Nome do usuário: ");
         String nomeUsuario = sc.nextLine();
-        Usuarios usuarioSelecionado = null;
-        for (Usuarios u : usuarios) {
+        Pessoa usuarioSelecionado = null;
+        for (Pessoa u : usuarios) {
             if (nomeUsuario.equals(u.getNome())) {
                 usuarioSelecionado = u;
                 break;
@@ -363,68 +263,81 @@ public class Main {
             System.out.println("Usuário não encontrado.");
             return;
         }
-        Emprestimos emprestimo = new Emprestimos(dataEmprestimo, horaEmprestimo, livroSelecionado, usuarioSelecionado);
-        emprestimos.add(emprestimo);
+
+        realizarEmprestimo(usuarioSelecionado, livroSelecionado);
+    }
+
+    private static void realizarEmprestimo(Pessoa usuario, Livro livro) {
+        if (!podeEmprestar(usuario, livro)) {
+            System.out.println("Não foi possível realizar o empréstimo.");
+            return;
+        }
+
+        int diasEmprestimo;
+        switch (usuario.getTipo()) {
+            case "Estudante":
+                diasEmprestimo = DIAS_EMPRESTIMO_ESTUDANTE;
+                break;
+            case "Funcionário":
+                diasEmprestimo = DIAS_EMPRESTIMO_FUNCIONARIO;
+                break;
+            case "Professor":
+                diasEmprestimo = DIAS_EMPRESTIMO_PROFESSOR;
+                break;
+            default:
+                System.out.println("Tipo de usuário desconhecido.");
+                return;
+        }
+
+        Emprestimos novoEmprestimo = new Emprestimos(usuario, livro, LocalDate.now());
+        emprestimos.add(novoEmprestimo);
         saveToFile(EMPRESTIMOS_FILE, emprestimos);
+        System.out.println("Empréstimo realizado com sucesso! Devolução em " + diasEmprestimo + " dias.");
+    }
+
+    private static int contarLivrosEmprestados(Pessoa usuario) {
+        int count = 0;
+        for (Emprestimos emprestimo : emprestimos) {
+            if (emprestimo.getUsuarios().equals(usuario) && !emprestimo.isDevolvido()) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    private static void consultarAcervo() {
+        System.out.println("Livros disponíveis no acervo:");
+        for (Livro livro : livros) {
+            System.out.println(livro.getTitulo());
+        }
     }
 
     private static void realizarDevolucao(Scanner sc) {
-        System.out.println("Opção 2 selecionada: Realizar devolução");
-        System.out.println("Nome do livro que deseja fazer a devolução: ");
+        System.out.println("Nome do livro: ");
         String tituloLivro = sc.nextLine();
-        System.out.println("Nome da pessoa que pegou emprestado: ");
+
+        System.out.println("Nome do usuário: ");
         String nomeUsuario = sc.nextLine();
+
         Emprestimos emprestimoSelecionado = null;
         for (Emprestimos e : emprestimos) {
-            if (tituloLivro.equals(e.getLivros().getTitulo()) && nomeUsuario.equals(e.getUsuarios().getNome())) {
+            if (e.getLivros().getTitulo().equals(tituloLivro) && e.getUsuarios().getNome().equals(nomeUsuario)) {
                 emprestimoSelecionado = e;
                 break;
             }
         }
-        if (emprestimoSelecionado != null) {
-            Livro livroDevolvido = emprestimoSelecionado.getLivros();
-            emprestimoSelecionado.devolverLivro(livroDevolvido);
-            emprestimos.remove(emprestimoSelecionado);
-            saveToFile(EMPRESTIMOS_FILE, emprestimos);
-            System.out.println("Devolução realizada com sucesso.");
-        } else {
+
+        if (emprestimoSelecionado == null) {
             System.out.println("Empréstimo não encontrado.");
+            return;
         }
+
+        emprestimoSelecionado.setDevolvido(true);
+        saveToFile(EMPRESTIMOS_FILE, emprestimos);
+        System.out.println("Devolução realizada com sucesso!");
     }
 
-    private static void listarEmprestimos() {
-        System.out.println("Opção 3 selecionada: Listar todos os empréstimos");
-        for (Emprestimos e : emprestimos) {
-            System.out.println("Livro: " + e.getLivros().getTitulo() + ", Usuário: " + e.getUsuarios().getNome());
-        }
-    }
-
-    private static void gerenciarReservas(Scanner sc) {
-        System.out.println("1. Realizar Reserva");
-        System.out.println("2. Cancelar Reserva");
-        System.out.println("3. Listar Reservas");
-        int subOpcao = sc.nextInt();
-        sc.nextLine();
-    
-        switch (subOpcao) {
-            case 1:
-                realizarReserva(sc);
-                break;
-            case 2:
-                cancelarReserva(sc);
-                break;
-            case 3:
-                listarReservas();
-                break;
-            default:
-                System.out.println("Opção inválida.");
-                break;
-        }
-    }
     private static void realizarReserva(Scanner sc) {
-        System.out.println("Opção 1 selecionada: Realizar reserva");
-        System.out.println("Data da reserva (yyyy-MM-dd): ");
-        String dataReserva = sc.nextLine();
         System.out.println("Nome do livro: ");
         String tituloLivro = sc.nextLine();
         Livro livroSelecionado = null;
@@ -438,10 +351,11 @@ public class Main {
             System.out.println("Livro não encontrado.");
             return;
         }
+
         System.out.println("Nome do usuário: ");
         String nomeUsuario = sc.nextLine();
-        Usuarios usuarioSelecionado = null;
-        for (Usuarios u : usuarios) {
+        Pessoa usuarioSelecionado = null;
+        for (Pessoa u : usuarios) {
             if (nomeUsuario.equals(u.getNome())) {
                 usuarioSelecionado = u;
                 break;
@@ -451,75 +365,273 @@ public class Main {
             System.out.println("Usuário não encontrado.");
             return;
         }
-        if (livroSelecionado.isDisponivel()) {
-            System.out.println("O livro está disponível para empréstimo, faça o empréstimo em vez da reserva.");
-            return;
+
+        for (Emprestimos emprestimo : emprestimos) {
+            if (emprestimo.getLivros().equals(livroSelecionado) && !emprestimo.isDevolvido()) {
+                System.out.println("Livro está emprestado, realizando reserva.");
+                Reserva novaReserva = new Reserva(usuarioSelecionado, livroSelecionado, LocalDate.now(),
+                        LocalTime.now());
+                reservas.add(novaReserva);
+                saveToFile(RESERVA_FILE, reservas);
+                return;
+            }
         }
-        Reserva reserva = new Reserva(livroSelecionado , usuarioSelecionado);
-        reservas.add(reserva);
-        saveToFile(RESERVA_FILE, reservas);
-        System.out.println("Reserva realizada com sucesso.");
+
+        System.out.println("Livro está disponível, realizando empréstimo.");
+        realizarEmprestimo(usuarioSelecionado, livroSelecionado);
     }
-    
-    private static void cancelarReserva(Scanner sc) {
-        System.out.println("Opção 2 selecionada: Cancelar reserva");
-        System.out.println("Nome do livro da reserva: ");
-        String tituloLivro = sc.nextLine();
-        System.out.println("Nome do usuário que fez a reserva: ");
-        String nomeUsuario = sc.nextLine();
-        Reserva reservaSelecionada = null;
-        for (Reserva r : reservas) {
-            if (tituloLivro.equals(r.getLivros().getTitulo()) && nomeUsuario.equals(r.getUsuarios().getNome())) {
-                reservaSelecionada = r;
+
+    private static void listarEmprestimosUsuario(Pessoa usuario) {
+        System.out.println("Empréstimos do usuário " + usuario.getNome() + ":");
+        for (Emprestimos emprestimo : emprestimos) {
+            if (emprestimo.getUsuarios().equals(usuario) && !emprestimo.getLivros().isDisponivel()) {
+                System.out.println(emprestimo.getLivros().getTitulo());
+            }
+        }
+    }
+
+    private static void listarReservasUsuario(Pessoa usuario) {
+        System.out.println("Reservas do usuário " + usuario.getNome() + ":");
+        for (Reserva reserva : reservas) {
+            if (reserva.getUsuarios().equals(usuario)) {
+                System.out.println(reserva.getLivros().getTitulo());
+            }
+        }
+    }
+
+    private static void gerenciarLivro(Scanner sc) {
+        while (true) {
+            System.out.println();
+            System.out.println("Escolha uma opção:");
+            System.out.println("1. Adicionar livro");
+            System.out.println("2. Remover livro");
+            System.out.println("3. Listar livros");
+            System.out.println("4. Voltar");
+
+            int opcao = sc.nextInt();
+            sc.nextLine();
+
+            switch (opcao) {
+                case 1:
+                    adicionarLivro(sc);
+                    break;
+                case 2:
+                    removerLivro(sc);
+                    break;
+                case 3:
+                    listarLivros();
+                    break;
+                case 4:
+                    return;
+                default:
+                    System.out.println("Opção inválida. Escolha novamente.");
+                    break;
+            }
+        }
+    }
+
+    private static void adicionarLivro(Scanner sc) {
+        System.out.println("Informe o título do livro:");
+        String titulo = sc.nextLine();
+        System.out.println("Informe o autor do livro:");
+        String autor = sc.nextLine();
+
+        Livro novoLivro = new Livro(titulo, autor);
+        livros.add(novoLivro);
+        saveToFile(LIVROS_FILE, livros);
+        System.out.println("Livro adicionado com sucesso!");
+    }
+
+    private static void removerLivro(Scanner sc) {
+        System.out.println("Informe o título do livro a ser removido:");
+        String titulo = sc.nextLine();
+
+        Livro livroParaRemover = null;
+        for (Livro l : livros) {
+            if (titulo.equals(l.getTitulo())) {
+                livroParaRemover = l;
                 break;
             }
         }
-        if (reservaSelecionada != null) {
-            reservas.remove(reservaSelecionada);
-            saveToFile(RESERVA_FILE, reservas);
-            System.out.println("Reserva cancelada com sucesso.");
-        } else {
-            System.out.println("Reserva não encontrada.");
-        }
-    }
-    private static void listarReservas() {
-        System.out.println("Opção 3 selecionada: Listar todas as reservas");
-        for (Reserva r : reservas) {
-            System.out.println("Livro: " + r.getLivros().getTitulo() + ", Usuário: " + r.getUsuarios().getNome());
-        }
-    }
-    
-    
 
-    private static <T> ArrayList<T> loadFromFile(String filename, Type type) {
-        File file = new File(filename);
-        if (!file.exists()) {
-            System.out.println("Arquivo " + filename + " não encontrado. Criando um novo arquivo.");
-            return new ArrayList<>();
+        if (livroParaRemover == null) {
+            System.out.println("Livro não encontrado.");
+            return;
         }
-    
-        try (FileReader reader = new FileReader(filename)) {
-            ArrayList<T> list = gson.fromJson(reader, type);
-            if (list == null) {
-                System.out.println("Arquivo " + filename + " está vazio ou corrompido. Criando uma nova lista.");
-                return new ArrayList<>();
-            }
-            return list;
-        } catch (IOException e) {
-            System.out.println("Erro ao ler o arquivo " + filename + ". Criando um novo arquivo.");
-            return new ArrayList<>();
-        } catch (Exception e) {
-            System.out.println("Erro ao processar o arquivo " + filename + ": " + e.getMessage());
-            return new ArrayList<>();
+
+        livros.remove(livroParaRemover);
+        saveToFile(LIVROS_FILE, livros);
+        System.out.println("Livro removido com sucesso!");
+    }
+
+    private static void listarLivros() {
+        System.out.println("Livros cadastrados:");
+        for (Livro livro : livros) {
+            System.out.println(livro.getTitulo() + " - " + livro.getAutores());
         }
     }
-    
+
+    private static void gerenciarUsuario(Scanner sc) {
+        while (true) {
+            System.out.println();
+            System.out.println("Escolha uma opção:");
+            System.out.println("1. Adicionar usuário");
+            System.out.println("2. Remover usuário");
+            System.out.println("3. Listar usuários");
+            System.out.println("4. Voltar");
+
+            int opcao = sc.nextInt();
+            sc.nextLine();
+
+            switch (opcao) {
+                case 1:
+                    adicionarUsuario(sc);
+                    break;
+                case 2:
+                    removerUsuario(sc);
+                    break;
+                case 3:
+                    listarUsuarios();
+                    break;
+                case 4:
+                    return;
+                default:
+                    System.out.println("Opção inválida. Escolha novamente.");
+                    break;
+            }
+        }
+    }
+
+    private static void adicionarUsuario(Scanner sc) {
+        System.out.println("Informe o nome do usuário:");
+        String nome = sc.nextLine();
+        System.out.println("Informe a senha do usuário:");
+        String senha = sc.nextLine();
+
+        System.out.println("Escolha o tipo de usuário:");
+        System.out.println("1. Estudante");
+        System.out.println("2. Funcionário");
+        System.out.println("3. Professor");
+
+        int tipo = sc.nextInt();
+        sc.nextLine();
+
+        Pessoa novoUsuario;
+        switch (tipo) {
+            case 1:
+                novoUsuario = new Aluno(nome, senha);
+                break;
+            case 2:
+                novoUsuario = new Funcionario(nome, senha);
+                break;
+            case 3:
+                novoUsuario = new Orientador(nome, senha);
+                break;
+            default:
+                System.out.println("Tipo de usuário inválido.");
+                return;
+        }
+
+        usuarios.add(novoUsuario);
+        saveToFile(USUARIOS_FILE, usuarios);
+        System.out.println("Usuário adicionado com sucesso!");
+    }
+
+    private static void removerUsuario(Scanner sc) {
+        System.out.println("Informe o nome do usuário a ser removido:");
+        String nome = sc.nextLine();
+
+        Pessoa usuarioParaRemover = null;
+        for (Pessoa u : usuarios) {
+            if (nome.equals(u.getNome())) {
+                usuarioParaRemover = u;
+                break;
+            }
+        }
+
+        if (usuarioParaRemover == null) {
+            System.out.println("Usuário não encontrado.");
+            return;
+        }
+
+        usuarios.remove(usuarioParaRemover);
+        saveToFile(USUARIOS_FILE, usuarios);
+        System.out.println("Usuário removido com sucesso!");
+    }
+
+    private static void listarUsuarios() {
+        System.out.println("Usuários cadastrados:");
+        for (Pessoa usuario : usuarios) {
+            System.out.println(usuario.getNome() + " - " + usuario.getTipo());
+        }
+    }
+
+    private static void gerenciarEmprestimos(Scanner sc) {
+        System.out.println("Empréstimos realizados:");
+        for (Emprestimos emprestimo : emprestimos) {
+            System.out.println("Livro: " + emprestimo.getLivros().getTitulo() + ", Usuário: "
+                    + emprestimo.getUsuarios().getNome() + ", Data de Empréstimo: " + emprestimo.getDataDoEmprestimo()
+                    + ", Data de Devolução: " + emprestimo.getDataDevolucao() + ", Devolvido: "
+                    + (emprestimo.isDevolvido() ? "Sim" : "Não"));
+        }
+    }
+
+    private static void gerenciarReservas(Scanner sc) {
+        System.out.println("Reservas realizadas:");
+        for (Reserva reserva : reservas) {
+            System.out.println("Livro: " + reserva.getLivros().getTitulo() + ", Usuário: "
+                    + reserva.getUsuarios().getNome() + ", Data da Reserva: " + reserva.getDataReserva());
+        }
+    }
+    private static void cadastrarTrabalho(Scanner sc){
+        System.out.println("Cadastrar Trabalho: ");
+        System.out.println("Titulo do trabalho : ");
+        String titulo = sc.nextLine();
+        System.out.println("Qual a faculdade: ");
+        String faculdade = sc.nextLine();
+        System.out.println("Qual a data de conclusão: ");
+        
+    }
+
+   private static <T> ArrayList<T> loadFromFile(String filename, Type type) {
+    ArrayList<T> list = new ArrayList<>();
+    try (FileReader reader = new FileReader(filename)) {
+        T[] data = gson.fromJson(reader, type);
+        if (data != null) {
+            list = new ArrayList<>(Arrays.asList(data));
+        }
+    } catch (FileNotFoundException e) {
+        System.out.println("Arquivo não encontrado, criando um novo.");
+    } catch (IOException e) {
+        System.err.println("Erro ao ler dados do arquivo: " + e.getMessage());
+    }
+    return list;
+}
 
     private static <T> void saveToFile(String filename, ArrayList<T> list) {
-        try (FileWriter writer = new FileWriter(filename)) {
-            gson.toJson(list, writer);
-        } catch (IOException e) {
-            e.printStackTrace();
+    try (FileWriter writer = new FileWriter(filename, false)) { // 'false' sobrescreve o arquivo
+        gson.toJson(list, writer);
+        writer.flush(); // Certifique-se de que todos os dados são gravados no arquivo
+    } catch (IOException e) {
+        System.err.println("Erro ao salvar dados no arquivo: " + e.getMessage());
+    }
+}
+
+    private static Pessoa findUsuarioByName(String nome) {
+        for (Pessoa u : usuarios) {
+            if (u.getNome().equalsIgnoreCase(nome)) {
+                return u;
+            }
         }
+        return null;
+    }
+
+    private static Livro findLivroByTitle(String titulo) {
+        for (Livro l : livros) {
+            if (l.getTitulo().equalsIgnoreCase(titulo)) {
+                return l;
+            }
+        }
+        return null;
     }
 }

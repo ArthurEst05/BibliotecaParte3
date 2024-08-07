@@ -1,5 +1,8 @@
 package Emprest;
 
+import java.time.LocalDate;
+import java.time.LocalTime;
+
 import Obras.Livro;
 import Usuarios.Usuarios;
 
@@ -8,7 +11,17 @@ public class Reserva {
     private Emprestimos Emprestimo;
     private Livro livros;
     private Usuarios usuarios;
+    private LocalDate dataReserva;
+    private LocalTime horaReserva;
     private String status;
+
+
+    public Reserva(Usuarios usuario, Livro livro, LocalDate dataReserva, LocalTime horaReserva) {
+        this.usuarios = usuario;
+        this.livros = livro;
+        this.dataReserva = dataReserva;
+        this.horaReserva = horaReserva;
+    }
 
     public Reserva(Livro livros, Usuarios usuarios) {
         if (livros.isDisponivel()) {
@@ -60,7 +73,13 @@ public class Reserva {
     public void cancelar() {
         this.status = "Cancelada";
     }
+    public LocalDate getDataReserva() {
+        return dataReserva;
+    }
 
+    public LocalTime getHoraReserva() {
+        return horaReserva;
+    }
     // Método para verificar se a reserva está ativa
     public boolean isAtiva() {
         return this.status.equals("Ativa");

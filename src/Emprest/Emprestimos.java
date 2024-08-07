@@ -1,4 +1,6 @@
 package Emprest;
+import java.time.LocalDate;
+
 import Obras.Livro;
 import Usuarios.Usuarios;
 
@@ -8,7 +10,9 @@ public class Emprestimos {
     private String horaDoEmprestimo;
     private Livro livros;
     private Usuarios usuarios;
-
+    private LocalDate dataEmprestimo;
+    private LocalDate dataDevolucao;
+    private boolean devolvido;
     
     
     public Emprestimos(int id, String dataDoEmprestimo, String horaDoEmprestimo, Livro livros, Usuarios usuarios) {
@@ -32,6 +36,16 @@ public class Emprestimos {
         this.usuarios = usuarios;
         this.livros.setDisponivel(false);
     }
+
+
+    public Emprestimos(Usuarios usuario, Livro livro, LocalDate dataEmprestimo ) {
+        this.usuarios = usuario;
+        this.livros = livro;
+        this.dataEmprestimo = dataEmprestimo;
+        this.dataDevolucao = dataEmprestimo.plusDays(14);
+        this.devolvido = false;
+    }
+
     public String getDataDoEmprestimo() {
         return dataDoEmprestimo;
     }
@@ -62,6 +76,21 @@ public class Emprestimos {
     }
     public void setId(int id) {
         this.id = id;
+    }
+    public LocalDate getDataEmprestimo() {
+        return dataEmprestimo;
+    }
+
+    public LocalDate getDataDevolucao() {
+        return dataDevolucao;
+    }
+
+    public boolean isDevolvido() {
+        return devolvido;
+    }
+
+    public void setDevolvido(boolean devolvido) {
+        this.devolvido = devolvido;
     }
     public void devolverLivro(Livro livro){
         this.livros.setDisponivel(true);

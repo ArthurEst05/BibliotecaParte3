@@ -10,11 +10,13 @@ public class Funcionario extends Usuarios implements Serializable{
     private double salario;
     private String endereço;
 
-    public Funcionario() {
+    
+    public Funcionario(String nome, String senha) {
+        super(nome, senha);
     }
 
-    public Funcionario(String nome, int idade, String sexo, String telefone, String cargo, double salario, String endereço) {
-        super(nome, idade, sexo, telefone);
+    public Funcionario(String nome, int idade, String sexo, String telefone, String cargo, double salario, String endereço, String senha) {
+        super(nome, idade, sexo, telefone, senha);
         this.cargo = cargo;
         this.salario = salario;
         this.endereço = endereço;
@@ -34,6 +36,11 @@ public class Funcionario extends Usuarios implements Serializable{
     }
 
     @Override
+     public String getTipo() {
+        return "Funcionário";
+    }
+
+    @Override
     public String toString() {
         return "Funcionario [cargo=" + cargo + ", salario=" + salario + ", endereço=" + endereço + ", getId()="
                 + getId() + ", getCargo()=" + getCargo() + ", getSalario()=" + getSalario() + ", getNome()=" + getNome()
@@ -42,5 +49,4 @@ public class Funcionario extends Usuarios implements Serializable{
                 + ", toString()=" + super.toString() + "]";
     }
 
-    
 }
