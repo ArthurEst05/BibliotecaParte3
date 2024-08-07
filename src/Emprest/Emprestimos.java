@@ -12,17 +12,25 @@ public class Emprestimos {
     
     
     public Emprestimos(int id, String dataDoEmprestimo, String horaDoEmprestimo, Livro livros, Usuarios usuarios) {
+        if (!livros.isDisponivel()) {
+            throw new IllegalArgumentException("Livro não está disponível para empréstimo.");
+        }
         this.id = id;
         this.dataDoEmprestimo = dataDoEmprestimo;
         this.horaDoEmprestimo = horaDoEmprestimo;
         this.livros = livros;
         this.usuarios = usuarios;
+        this.livros.setDisponivel(false);
     }
     public Emprestimos(String dataDoEmprestimo, String horaDoEmprestimo, Livro livros, Usuarios usuarios) {
+        if (!livros.isDisponivel()) {
+            throw new IllegalArgumentException("Livro não está disponível para empréstimo.");
+        }
         this.dataDoEmprestimo = dataDoEmprestimo;
         this.horaDoEmprestimo = horaDoEmprestimo;
         this.livros = livros;
         this.usuarios = usuarios;
+        this.livros.setDisponivel(false);
     }
     public String getDataDoEmprestimo() {
         return dataDoEmprestimo;
@@ -56,8 +64,7 @@ public class Emprestimos {
         this.id = id;
     }
     public void devolverLivro(Livro livro){
-        livro.setEmprestimo(true);
-        System.out.println("Livro devolvido");
+        this.livros.setDisponivel(true);
     }
 
 }

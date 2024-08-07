@@ -8,19 +8,18 @@ public class Livro extends Obra implements Serializable{
     private String editora;
     private String edicao;
     private int numFolhas;
-    private boolean emprestimo;
-
+    private boolean disponivel;
     
-    public Livro(String titulo, String autores, String area, String ano) {
-        super(titulo, autores, area, ano);
+    public Livro(String titulo, String autores, String area, String ano, boolean digital) {
+        super(titulo, autores, area, ano, digital);
     }
 
-    public Livro(String titulo, String autores, String area,String editora, String ano, String edicao, int numFolhas, boolean emprestimo) {
-        super(titulo, autores, area, ano);
+    public Livro(String titulo, String autores, String area,String editora, String ano, String edicao, int numFolhas, boolean disponivel, boolean digital) {
+        super(titulo, autores, area, ano, digital);
         this.editora = editora;
         this.edicao = edicao;
         this.numFolhas = numFolhas;
-        this.emprestimo = emprestimo;
+        this.disponivel = true;
     }
 
     public String getEditora() {
@@ -41,13 +40,7 @@ public class Livro extends Obra implements Serializable{
     public void setNumFolhas(int numFolhas) {
         this.numFolhas = numFolhas;
     }
-    public boolean isEmprestimo() {
-        return emprestimo;
-    }
-    public void setEmprestimo(boolean emprestimo) {
-        this.emprestimo = emprestimo;
-    }
-    
+
     public void abrirLivro(){
         System.out.println("Livro está aberto para leitura");
     }
@@ -60,5 +53,12 @@ public class Livro extends Obra implements Serializable{
         System.out.println("Lendo livro");
     }
     
+    public boolean isDisponivel() {
+        return disponivel;
+    }
+
+    public void setDisponivel(boolean disponivel) {
+        this.disponivel = disponivel;
+    }
 
 }

@@ -10,6 +10,15 @@ public abstract class Obra implements Serializable{
     private String autores;
     private String area;
     private String ano;
+    private boolean digital;
+
+    public Obra(String titulo, String autores, String area, String ano, boolean digital) {
+        this.titulo = titulo;
+        this.autores = autores;
+        this.area = area;
+        this.ano = ano;
+        this.digital = digital;
+    }
     
     public Obra(String titulo, String autores, String area, String ano) {
         this.titulo = titulo;
@@ -64,4 +73,12 @@ public abstract class Obra implements Serializable{
         this.id = id;
     }
     
+    public boolean isDigital(){
+        return digital; 
+    }
+
+    public void setDigital(boolean digital){
+        this.digital = digital;
+    }
+
 }
