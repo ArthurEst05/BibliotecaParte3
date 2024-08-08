@@ -2,29 +2,37 @@ package Usuarios;
 
 import java.io.Serializable;
 
-public abstract class Usuarios implements Serializable{
+public abstract class Pessoa implements Serializable{
     private static final long serialVersionUID = 1L;
 
     private int id; 
     private String nome;
     private int idade;
     private String sexo;
+    private String cpf;
     private String telefone;
     private String senha;
 
-    public Usuarios(String nome, String senha) {
+    public Pessoa(String nome, String senha) {
         this.nome = nome;
         this.senha = senha;
     }
 
-    public Usuarios(String nome, int idade, String sexo, String telefone,String senha) {
+    public Pessoa(String nome, int idade, String sexo, String telefone,String senha) {
         this.nome = nome;
         this.idade = idade;
         this.sexo = sexo;
         this.telefone = telefone;
         this.senha = senha;
     }
+    
+    public Pessoa(String nome) {
+        this.nome = nome;
+    }
 
+    public String getCpf() {
+        return cpf;
+    }
 
     public int getId() {
         return id;
@@ -76,7 +84,7 @@ public abstract class Usuarios implements Serializable{
 
     public abstract String getTipo();
 
-    public static String getTipoUsuario(Usuarios usuario) {
+    public static String getTipoUsuario(Pessoa usuario) {
     if (usuario != null) {
         return usuario.getTipo();
     } else {

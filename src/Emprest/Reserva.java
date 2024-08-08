@@ -4,26 +4,26 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 
 import Obras.Livro;
-import Usuarios.Usuarios;
+import Usuarios.Pessoa;
 
 public class Reserva {
     private int id;
     private Emprestimos Emprestimo;
     private Livro livros;
-    private Usuarios usuarios;
+    private Pessoa usuarios;
     private LocalDate dataReserva;
     private LocalTime horaReserva;
     private String status;
 
 
-    public Reserva(Usuarios usuario, Livro livro, LocalDate dataReserva, LocalTime horaReserva) {
+    public Reserva(Pessoa usuario, Livro livro, LocalDate dataReserva, LocalTime horaReserva) {
         this.usuarios = usuario;
         this.livros = livro;
         this.dataReserva = dataReserva;
         this.horaReserva = horaReserva;
     }
 
-    public Reserva(Livro livros, Usuarios usuarios) {
+    public Reserva(Livro livros, Pessoa usuarios) {
         if (livros.isDisponivel()) {
             throw new IllegalArgumentException("Livro está disponível, faça um empréstimo em vez de uma reserva.");
         }
@@ -56,11 +56,11 @@ public class Reserva {
         this.livros = livros;
     }
 
-    public Usuarios getUsuarios() {
+    public Pessoa getPessoa() {
         return usuarios;
     }
 
-    public void setUsuarios(Usuarios usuarios) {
+    public void setPessoa(Pessoa usuarios) {
         this.usuarios = usuarios;
     }
     public String getStatus() {

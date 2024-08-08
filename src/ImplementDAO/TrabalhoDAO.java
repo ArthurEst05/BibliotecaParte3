@@ -9,44 +9,39 @@ import java.io.ObjectOutputStream;
 import java.util.HashMap;
 import java.util.Map;
 
+import Faculdade.Trabalho;
 import Interface.DAO;
 import Obras.Obra;
 
 
-public class ObraDAO implements DAO<Obra>{
+public class TrabalhoDAO implements DAO<Trabalho>{
     private static final String path = "C:\\temp\\DadosBiblioteca.txt";
-    private Map<Integer, Obra> database = new HashMap<>();
+    private Map<Integer, Trabalho> database = new HashMap<>();
     private int currentId = 0;
 
-    public ObraDAO() throws IOException {
+    public TrabalhoDAO() throws IOException {
         loadFromFile();
     }
 
 
     @Override
-    public void gravar(Obra obj) {
+    public void gravar(Trabalho obj) {
         obj.setId(currentId++);
-        database.put(obj.getId(), obj);
+        database.put((int) obj.getId(), obj);
         saveToFile();
-        System.out.println("Obra gravada: " + obj.getTitulo());
+        System.out.println("Obra gravada: " + obj.getTitTrabalho());
     }
 
     @Override
-    public void excluir(Obra obj) {
-        database.remove(obj.getId());
+    public void excluir(Trabalho obj) {
+        database.remove((int)obj.getId());
         saveToFile();
-        System.out.println("Obra excluida: " + obj.getTitulo());
+        System.out.println("Obra excluida: " + obj.getTitTrabalho());
     }
 
-    @Override
-    public void atualizar(Obra obj) {
-        database.put(obj.getId(), obj);
-        saveToFile();
-        System.out.println("Obra Atualizado " + obj);
-    }
 
     @Override
-    public Obra ler(int id) {
+    public Trabalho ler(int id) {
         return database.get(id);
     }
 
@@ -66,11 +61,18 @@ public class ObraDAO implements DAO<Obra>{
             return;
         }
         try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(path))) {
-            database = (HashMap<Integer, Obra>) ois.readObject();
+            database = (HashMap<Integer, Trabalho>) ois.readObject();
             currentId = database.size();
         } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
         }
+    }
+
+
+    @Override
+    public void atualizar(Trabalho obj) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'atualizar'");
     }
 
     

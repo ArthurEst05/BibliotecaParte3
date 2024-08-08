@@ -5,6 +5,9 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.sql.Date;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Scanner;
@@ -12,34 +15,37 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 
 import Emprest.Emprestimos;
 import Emprest.Reserva;
+import Faculdade.Curso;
 import Faculdade.Faculdade;
-import ImplementDAO.ObraDAO;
-import ImplementDAO.UsuarioDAO;
-import Interface.DAO;
+import Faculdade.Trabalho;
 import Obras.Livro;
-import Obras.Obra;
 import Usuarios.Aluno;
 import Usuarios.Funcionario;
 import Usuarios.Orientador;
 import Usuarios.Pessoa;
+import Usuarios.PessoaInstanceCreator;
 
 public class Main {
+    private static Gson gson = new GsonBuilder()
+            .registerTypeAdapter(Pessoa.class, new PessoaInstanceCreator())
+            .create();
+
     private static final String USUARIOS_FILE = "C:\\temp\\usuarios.json";
     private static final String LIVROS_FILE = "C:\\temp\\livros.json";
     private static final String EMPRESTIMOS_FILE = "C:\\temp\\emprestimos.json";
     private static final String RESERVA_FILE = "C:\\temp\\reservas.json";
+    private static final String TRABALHO_FILE = "C:\\temp\\trabalhos.json";
 
-    private static Gson gson = new Gson();
     private static ArrayList<Emprestimos> emprestimos;
     private static ArrayList<Livro> livros;
     private static ArrayList<Pessoa> usuarios;
-    private static DAO<Pessoa> usuarioDAO;
-    private static DAO<Obra> obraDao;
     private static ArrayList<Reserva> reservas;
+    private static ArrayList<Trabalho> trabalhos;
 
     public static void main(String[] args) throws IOException {
         Scanner sc = new Scanner(System.in);
@@ -51,9 +57,6 @@ public class Main {
         }.getType());
         reservas = loadFromFile(RESERVA_FILE, new TypeToken<ArrayList<Reserva>>() {
         }.getType());
-
-        usuarioDAO = new UsuarioDAO();
-        obraDao = new ObraDAO();
 
         Pessoa usuarioAdm = findUsuarioByName("adm");
         if (usuarioAdm == null) {
@@ -137,9 +140,9 @@ public class Main {
                 case 4:
                     gerenciarReservas(sc);
                     break;
-                    case 5 : 
-
-                break;
+                case 5:
+                    cadastrarTrabalho(sc);
+                    break;
                 case 6:
                     return; // Volta para o menu anterior
                 default:
@@ -184,6 +187,8 @@ public class Main {
                     listarReservasUsuario(usuarioLogado);
                     break;
                 case 7:
+                    System.exit(0);
+                    System.out.println("Saindo");
                     return;
                 default:
                     System.out.println("Opção inválida. Escolha novamente.");
@@ -298,7 +303,7 @@ public class Main {
     private static int contarLivrosEmprestados(Pessoa usuario) {
         int count = 0;
         for (Emprestimos emprestimo : emprestimos) {
-            if (emprestimo.getUsuarios().equals(usuario) && !emprestimo.isDevolvido()) {
+            if (emprestimo.getPessoa().equals(usuario) && !emprestimo.isDevolvido()) {
                 count++;
             }
         }
@@ -321,7 +326,7 @@ public class Main {
 
         Emprestimos emprestimoSelecionado = null;
         for (Emprestimos e : emprestimos) {
-            if (e.getLivros().getTitulo().equals(tituloLivro) && e.getUsuarios().getNome().equals(nomeUsuario)) {
+            if (e.getLivros().getTitulo().equals(tituloLivro) && e.getPessoa().getNome().equals(nomeUsuario)) {
                 emprestimoSelecionado = e;
                 break;
             }
@@ -384,7 +389,7 @@ public class Main {
     private static void listarEmprestimosUsuario(Pessoa usuario) {
         System.out.println("Empréstimos do usuário " + usuario.getNome() + ":");
         for (Emprestimos emprestimo : emprestimos) {
-            if (emprestimo.getUsuarios().equals(usuario) && !emprestimo.getLivros().isDisponivel()) {
+            if (emprestimo.getPessoa().equals(usuario) && !emprestimo.getLivros().isDisponivel()) {
                 System.out.println(emprestimo.getLivros().getTitulo());
             }
         }
@@ -393,7 +398,7 @@ public class Main {
     private static void listarReservasUsuario(Pessoa usuario) {
         System.out.println("Reservas do usuário " + usuario.getNome() + ":");
         for (Reserva reserva : reservas) {
-            if (reserva.getUsuarios().equals(usuario)) {
+            if (reserva.getPessoa().equals(usuario)) {
                 System.out.println(reserva.getLivros().getTitulo());
             }
         }
@@ -570,7 +575,7 @@ public class Main {
         System.out.println("Empréstimos realizados:");
         for (Emprestimos emprestimo : emprestimos) {
             System.out.println("Livro: " + emprestimo.getLivros().getTitulo() + ", Usuário: "
-                    + emprestimo.getUsuarios().getNome() + ", Data de Empréstimo: " + emprestimo.getDataDoEmprestimo()
+                    + emprestimo.getPessoa().getNome() + ", Data de Empréstimo: " + emprestimo.getDataDoEmprestimo()
                     + ", Data de Devolução: " + emprestimo.getDataDevolucao() + ", Devolvido: "
                     + (emprestimo.isDevolvido() ? "Sim" : "Não"));
         }
@@ -580,42 +585,88 @@ public class Main {
         System.out.println("Reservas realizadas:");
         for (Reserva reserva : reservas) {
             System.out.println("Livro: " + reserva.getLivros().getTitulo() + ", Usuário: "
-                    + reserva.getUsuarios().getNome() + ", Data da Reserva: " + reserva.getDataReserva());
+                    + reserva.getPessoa().getNome() + ", Data da Reserva: " + reserva.getDataReserva());
         }
-    }
-    private static void cadastrarTrabalho(Scanner sc){
-        System.out.println("Cadastrar Trabalho: ");
-        System.out.println("Titulo do trabalho : ");
-        String titulo = sc.nextLine();
-        System.out.println("Qual a faculdade: ");
-        String faculdade = sc.nextLine();
-        System.out.println("Qual a data de conclusão: ");
-        
     }
 
-   private static <T> ArrayList<T> loadFromFile(String filename, Type type) {
-    ArrayList<T> list = new ArrayList<>();
-    try (FileReader reader = new FileReader(filename)) {
-        T[] data = gson.fromJson(reader, type);
-        if (data != null) {
-            list = new ArrayList<>(Arrays.asList(data));
+    private static void cadastrarTrabalho(Scanner sc) {
+        System.out.println("Cadastrar Trabalho: ");
+        System.out.print("Título do trabalho: ");
+        String titulo = sc.nextLine();
+
+        System.out.print("Qual a faculdade: ");
+        String faculdade = sc.nextLine();
+
+        System.out.print("Qual a data de conclusão (dd/MM/yyyy): ");
+        String dataConclusao = sc.nextLine();
+
+        SimpleDateFormat formato = new SimpleDateFormat("dd/MM/yyyy");
+        Date dataAtual = null;
+        try {
+            dataAtual = (Date) formato.parse(dataConclusao);
+        } catch (ParseException e) {
+            System.out.println("Formato de data inválido! Use dd/MM/yyyy.");
+            return;
         }
-    } catch (FileNotFoundException e) {
-        System.out.println("Arquivo não encontrado, criando um novo.");
-    } catch (IOException e) {
-        System.err.println("Erro ao ler dados do arquivo: " + e.getMessage());
+        String dataFormatada = formato.format(dataAtual);
+
+        System.out.print("Aluno: ");
+        String nomeAluno = sc.nextLine();
+
+        System.out.print("Orientador: ");
+        String nomeOrientador = sc.nextLine();
+
+        System.out.print("Curso: ");
+        String nomeCurso = sc.nextLine();
+
+        System.out.print("Nota: ");
+        int score = sc.nextInt();
+        sc.nextLine(); // Consome a nova linha restante
+
+        System.out.print("Quantidade de votos: ");
+        int quantVotos = sc.nextInt();
+        sc.nextLine(); // Consome a nova linha restante
+
+        Trabalho trabalho = new Trabalho(
+                titulo,
+                new Faculdade(faculdade),
+                dataFormatada,
+                new Aluno(nomeAluno),
+                new Orientador(nomeOrientador),
+                new Curso(nomeCurso),
+                score,
+                quantVotos);
+
+        trabalhos.add(trabalho);
+        saveToFile(TRABALHO_FILE, trabalhos);
+        System.out.println("Trabalho adicionado com sucesso!");
     }
-    return list;
-}
+
+    private static <T> ArrayList<T> loadFromFile(String filename, Type type) {
+        ArrayList<T> list = new ArrayList<>();
+        try (FileReader reader = new FileReader(filename)) {
+            T[] data = gson.fromJson(reader, type);
+            if (data != null) {
+                list = new ArrayList<>(Arrays.asList(data));
+            }
+        } catch (FileNotFoundException e) {
+            System.out.println("Arquivo não encontrado, criando um novo.");
+        } catch (Exception e) {
+            System.out.println("Erro ao carregar o arquivo: " + e.getMessage());
+            // Aqui você pode inicializar a lista para evitar null
+            list = new ArrayList<>();
+        }
+        return list;
+    }
 
     private static <T> void saveToFile(String filename, ArrayList<T> list) {
-    try (FileWriter writer = new FileWriter(filename, false)) { // 'false' sobrescreve o arquivo
-        gson.toJson(list, writer);
-        writer.flush(); // Certifique-se de que todos os dados são gravados no arquivo
-    } catch (IOException e) {
-        System.err.println("Erro ao salvar dados no arquivo: " + e.getMessage());
+        try (FileWriter writer = new FileWriter(filename, false)) { // 'false' sobrescreve o arquivo
+            gson.toJson(list, writer);
+            writer.flush(); // Certifique-se de que todos os dados são gravados no arquivo
+        } catch (IOException e) {
+            System.err.println("Erro ao salvar dados no arquivo: " + e.getMessage());
+        }
     }
-}
 
     private static Pessoa findUsuarioByName(String nome) {
         for (Pessoa u : usuarios) {

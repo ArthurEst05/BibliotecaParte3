@@ -1,23 +1,23 @@
 package ImplementDAO;
 
 import Interface.DAO;
-import Usuarios.Usuarios;
+import Usuarios.Pessoa;
 
 import java.io.*;
 import java.util.HashMap;
 import java.util.Map;
 
-public class UsuarioDAO implements DAO<Usuarios> {
+public class PessoaDAO implements DAO<Pessoa> {
     private static final String path = "C:\\temp\\DadosBiblioteca.txt";
-    private Map<Integer, Usuarios> database = new HashMap<>();
+    private Map<Integer, Pessoa> database = new HashMap<>();
     private int currentId = 0;
 
-    public UsuarioDAO() {
+    public PessoaDAO() {
         loadFromFile();
     }
 
     @Override
-    public void gravar(Usuarios obj) {
+    public void gravar(Pessoa obj) {
         obj.setId(currentId++);
         database.put(obj.getId(), obj);
         saveToFile();
@@ -25,21 +25,21 @@ public class UsuarioDAO implements DAO<Usuarios> {
     }
 
     @Override
-    public void excluir(Usuarios obj) {
+    public void excluir(Pessoa obj) {
         database.remove(obj.getId());
         saveToFile();
         System.out.println("Usuário excluído " + obj.getNome());
     }
 
     @Override
-    public void atualizar(Usuarios obj) {
+    public void atualizar(Pessoa obj) {
         database.put(obj.getId(), obj);
         saveToFile();
         System.out.println("Usuário atualizado " + obj.getNome());
     }
 
     @Override
-    public Usuarios ler(int id) {
+    public Pessoa ler(int id) {
         return database.get(id);
     }
 
@@ -59,7 +59,7 @@ public class UsuarioDAO implements DAO<Usuarios> {
             return;
         }
         try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(path))) {
-            database = (HashMap<Integer, Usuarios>) ois.readObject();
+            database = (HashMap<Integer, Pessoa>) ois.readObject();
             currentId = database.size();
         } catch (EOFException e) {
             System.out.println("Fim do arquivo atingido. Nenhum dado foi lido.");

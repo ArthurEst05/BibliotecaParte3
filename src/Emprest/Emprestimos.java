@@ -2,20 +2,20 @@ package Emprest;
 import java.time.LocalDate;
 
 import Obras.Livro;
-import Usuarios.Usuarios;
+import Usuarios.Pessoa;
 
 public class Emprestimos {
     private int id;
     private String dataDoEmprestimo;
     private String horaDoEmprestimo;
     private Livro livros;
-    private Usuarios usuarios;
+    private Pessoa usuarios;
     private LocalDate dataEmprestimo;
     private LocalDate dataDevolucao;
     private boolean devolvido;
     
     
-    public Emprestimos(int id, String dataDoEmprestimo, String horaDoEmprestimo, Livro livros, Usuarios usuarios) {
+    public Emprestimos(int id, String dataDoEmprestimo, String horaDoEmprestimo, Livro livros, Pessoa usuarios) {
         if (!livros.isDisponivel()) {
             throw new IllegalArgumentException("Livro não está disponível para empréstimo.");
         }
@@ -26,7 +26,7 @@ public class Emprestimos {
         this.usuarios = usuarios;
         this.livros.setDisponivel(false);
     }
-    public Emprestimos(String dataDoEmprestimo, String horaDoEmprestimo, Livro livros, Usuarios usuarios) {
+    public Emprestimos(String dataDoEmprestimo, String horaDoEmprestimo, Livro livros, Pessoa usuarios) {
         if (!livros.isDisponivel()) {
             throw new IllegalArgumentException("Livro não está disponível para empréstimo.");
         }
@@ -38,7 +38,7 @@ public class Emprestimos {
     }
 
 
-    public Emprestimos(Usuarios usuario, Livro livro, LocalDate dataEmprestimo ) {
+    public Emprestimos(Pessoa usuario, Livro livro, LocalDate dataEmprestimo ) {
         this.usuarios = usuario;
         this.livros = livro;
         this.dataEmprestimo = dataEmprestimo;
@@ -64,10 +64,10 @@ public class Emprestimos {
     public void setLivros(Livro livros) {
         this.livros = livros;
     }
-    public Usuarios getUsuarios() {
+    public Pessoa getPessoa() {
         return usuarios;
     }
-    public void setUsuarios(Usuarios usuarios) {
+    public void setPessoa(Pessoa usuarios) {
         this.usuarios = usuarios;
     }
 
